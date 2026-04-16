@@ -31,7 +31,7 @@ var scanCmd = &cobra.Command{
 			loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 			configOverrides := &clientcmd.ConfigOverrides{}
 			kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-			
+
 			restConfig, err := kubeConfig.ClientConfig()
 			if err != nil {
 				fmt.Printf("Error loading kubeconfig: %v\n", err)
@@ -62,16 +62,20 @@ var scanCmd = &cobra.Command{
 
 		var allFindings []checkers.Finding
 		for _, c := range allCheckers {
-			findings, err := c.Check(context.Background(), state)
+			results, err := c.Check(context.Background(), state)
 			if err != nil {
 				fmt.Printf("Error in checker %s: %v\n", c.Name(), err)
 				continue
 			}
-			allFindings = append(allFindings, findings...)
+			for _, r := range results {
+				if r.Status == checkers.StatusFailure && r.Finding != nil {
+					allFindings = append(allFindings, *r.Finding)
+				}
+			}
 		}
 
 		fmt.Print(report.GenerateMarkdown(allFindings))
-		
+
 		outputFile, _ := cmd.Flags().GetString("output")
 		if outputFile != "" {
 			err := report.GenerateJSON(allFindings, outputFile)

@@ -64,15 +64,29 @@ func (m *mockDiscovery) filterByNamespace(fullState *ClusterState) (*ClusterStat
 		return filtered, nil // No CP in this namespace
 	}
 
-	// 2. Find SMMR in the namespace
-	var memberNamespaces []string
+	// 2. Identify all mesh namespaces
+	memberNamespaces := make(map[string]bool)
+	memberNamespaces[ns] = true // CP namespace is always a member
+
+	// Find SMMR in the namespace
 	for _, smmr := range fullState.SMMRs {
 		if smmr.Namespace == ns {
+			// Check spec.members
 			if spec, ok := smmr.Spec.(map[string]interface{}); ok {
 				if members, ok := spec["members"].([]interface{}); ok {
 					for _, member := range members {
 						if mStr, ok := member.(string); ok {
-							memberNamespaces = append(memberNamespaces, mStr)
+							memberNamespaces[mStr] = true
+						}
+					}
+				}
+			}
+			// Check status.members (resolved namespaces)
+			if status, ok := smmr.Status.(map[string]interface{}); ok {
+				if members, ok := status["members"].([]interface{}); ok {
+					for _, member := range members {
+						if mStr, ok := member.(string); ok {
+							memberNamespaces[mStr] = true
 						}
 					}
 				}
@@ -81,44 +95,59 @@ func (m *mockDiscovery) filterByNamespace(fullState *ClusterState) (*ClusterStat
 		}
 	}
 
-	// If no SMMR found, the mesh is effectively empty (except the CP itself)
-	if len(memberNamespaces) == 0 {
-		return filtered, nil
-	}
-
-	// Helper to check if a namespace is a member
-	isMember := func(n string) bool {
-		for _, m := range memberNamespaces {
-			if m == n {
-				return true
+	// Find SMMs pointing to this CP
+	for _, smm := range fullState.SMMs {
+		if spec, ok := smm.Spec.(map[string]interface{}); ok {
+			if cpNs, ok := spec["controlPlaneNamespace"].(string); ok && cpNs == ns {
+				memberNamespaces[smm.Namespace] = true
+				filtered.SMMs = append(filtered.SMMs, smm)
 			}
 		}
-		return false
 	}
 
 	// 3. Filter other resources by member namespaces
 	for _, vs := range fullState.VirtualServices {
-		if isMember(vs.Namespace) {
+		if memberNamespaces[vs.Namespace] {
 			filtered.VirtualServices = append(filtered.VirtualServices, vs)
 		}
 	}
 	for _, gw := range fullState.Gateways {
-		if isMember(gw.Namespace) {
+		if memberNamespaces[gw.Namespace] {
 			filtered.Gateways = append(filtered.Gateways, gw)
 		}
 	}
 	for _, se := range fullState.ServiceEntries {
-		if isMember(se.Namespace) {
+		if memberNamespaces[se.Namespace] {
 			filtered.ServiceEntries = append(filtered.ServiceEntries, se)
 		}
 	}
+	for _, sc := range fullState.Sidecars {
+		if memberNamespaces[sc.Namespace] {
+			filtered.Sidecars = append(filtered.Sidecars, sc)
+		}
+	}
+	for _, ap := range fullState.AuthorizationPolicies {
+		if memberNamespaces[ap.Namespace] {
+			filtered.AuthorizationPolicies = append(filtered.AuthorizationPolicies, ap)
+		}
+	}
+	for _, pa := range fullState.PeerAuthentications {
+		if memberNamespaces[pa.Namespace] {
+			filtered.PeerAuthentications = append(filtered.PeerAuthentications, pa)
+		}
+	}
+	for _, tel := range fullState.Telemetries {
+		if memberNamespaces[tel.Namespace] {
+			filtered.Telemetries = append(filtered.Telemetries, tel)
+		}
+	}
 	for _, rt := range fullState.Routes {
-		if isMember(rt.Namespace) {
+		if memberNamespaces[rt.Namespace] {
 			filtered.Routes = append(filtered.Routes, rt)
 		}
 	}
 	for _, name := range fullState.Namespaces {
-		if isMember(name.Name) {
+		if memberNamespaces[name.Name] {
 			filtered.Namespaces = append(filtered.Namespaces, name)
 		}
 	}

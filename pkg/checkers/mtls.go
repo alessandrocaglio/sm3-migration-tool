@@ -16,8 +16,8 @@ func (c *mtlsChecker) Name() string {
 	return "mTLS Checker"
 }
 
-func (c *mtlsChecker) Check(ctx context.Context, state *discovery.ClusterState) ([]Finding, error) {
-	var findings []Finding
+func (c *mtlsChecker) Check(ctx context.Context, state *discovery.ClusterState) ([]CheckResult, error) {
+	var results []CheckResult
 
 	for _, cp := range state.SM2ControlPlanes {
 		spec, ok := cp.Spec.(map[string]interface{})
@@ -27,25 +27,39 @@ func (c *mtlsChecker) Check(ctx context.Context, state *discovery.ClusterState) 
 
 		security, ok := spec["security"].(map[string]interface{})
 		if !ok {
+			results = append(results, CheckResult{
+				Title:  "mTLS Configuration Check",
+				Target: cp.Name,
+				Status: StatusSuccess,
+			})
 			continue
 		}
 
 		dataPlane, ok := security["dataPlane"].(map[string]interface{})
 		if !ok {
+			results = append(results, CheckResult{
+				Title:  "mTLS Configuration Check",
+				Target: cp.Name,
+				Status: StatusSuccess,
+			})
 			continue
 		}
 
 		mtlsEnabled, _ := dataPlane["mtls"].(bool)
 		if mtlsEnabled {
-			findings = append(findings, Finding{
-				ResourceName: cp.Name,
-				Namespace:    cp.Namespace,
-				Kind:         cp.Kind,
-				Message:      "SM2 mTLS dataPlane management is enabled. In OSSM 3.x, use PeerAuthentication for strict mTLS.",
-				Severity:     SeverityMedium,
-				Remediation:  RemediationGuide{
-					Description: "Create a PeerAuthentication resource with mtls: STRICT in the root namespace (e.g., istio-system) and remove the field from SMCP.",
-					YAML: `apiVersion: security.istio.io/v1beta1
+			results = append(results, CheckResult{
+				Title:  "mTLS Configuration Check",
+				Target: cp.Name,
+				Status: StatusFailure,
+				Finding: &Finding{
+					ResourceName: cp.Name,
+					Namespace:    cp.Namespace,
+					Kind:         cp.Kind,
+					Message:      "SM2 mTLS dataPlane management is enabled. In OSSM 3.x, use PeerAuthentication for strict mTLS.",
+					Severity:     SeverityMedium,
+					Remediation: RemediationGuide{
+						Description: "Create a PeerAuthentication resource with mtls: STRICT in the root namespace (e.g., istio-system) and remove the field from SMCP.",
+						YAML: `apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -53,15 +67,22 @@ metadata:
 spec:
   mtls:
     mode: STRICT`,
-					Commands: []string{
-						"cat <<EOF | oc apply -f -\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\n  name: default\n  namespace: " + cp.Namespace + "\nspec:\n  mtls:\n    mode: STRICT\nEOF",
-						"oc patch smcp " + cp.Name + " -n " + cp.Namespace + " --type=json -p='[{\"op\": \"remove\", \"path\": \"/spec/security/dataPlane/mtls\"}]'",
+						Commands: []string{
+							"cat <<EOF | oc apply -f -\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\n  name: default\n  namespace: " + cp.Namespace + "\nspec:\n  mtls:\n    mode: STRICT\nEOF",
+							"oc patch smcp " + cp.Name + " -n " + cp.Namespace + " --type=json -p='[{\"op\": \"remove\", \"path\": \"/spec/security/dataPlane/mtls\"}]'",
+						},
+						DocsLinks: []string{"https://docs.redhat.com/en/documentation/openshift_container_platform/4.14/html/service_mesh/migrating-from-service-mesh-2-to-service-mesh-3#transport-layer-security-tls-configuration-change"},
 					},
-					DocsLinks: []string{"https://docs.redhat.com/en/documentation/openshift_container_platform/4.14/html/service_mesh/migrating-from-service-mesh-2-to-service-mesh-3#transport-layer-security-tls-configuration-change"},
 				},
+			})
+		} else {
+			results = append(results, CheckResult{
+				Title:  "mTLS Configuration Check",
+				Target: cp.Name,
+				Status: StatusSuccess,
 			})
 		}
 	}
 
-	return findings, nil
+	return results, nil
 }

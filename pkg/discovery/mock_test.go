@@ -7,7 +7,7 @@ import (
 
 func TestMockDiscovery_Filtering(t *testing.T) {
 	config := DiscoveryConfig{
-		ControlPlaneNamespace: "istio-system",
+		ControlPlaneNamespace: "team-servicemesh",
 	}
 	disc := NewMockDiscovery("../../testdata/mock-cluster.yaml", config)
 
@@ -17,22 +17,22 @@ func TestMockDiscovery_Filtering(t *testing.T) {
 	}
 
 	if len(state.SM2ControlPlanes) != 1 {
-		t.Errorf("Expected 1 SMCP, got %d", len(state.SM2ControlPlanes))
+		t.Fatalf("Expected 1 SMCP, got %d", len(state.SM2ControlPlanes))
 	}
 
 	if state.SM2ControlPlanes[0].Name != "basic" {
 		t.Errorf("Expected SMCP 'basic', got '%s'", state.SM2ControlPlanes[0].Name)
 	}
 
-	// bookinfo members
-	foundOversized := false
-	for _, se := range state.ServiceEntries {
-		if se.Name == "oversized-entry" {
-			foundOversized = true
+	// team-servicemesh members (resolved via status)
+	foundAppVs := false
+	for _, vs := range state.VirtualServices {
+		if vs.Name == "app-vs" {
+			foundAppVs = true
 		}
 	}
 
-	if !foundOversized {
-		t.Error("Expected oversized-entry in filtered results, but it was missing")
+	if !foundAppVs {
+		t.Error("Expected app-vs in filtered results, but it was missing")
 	}
 }

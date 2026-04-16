@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +37,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("mode", "m", "live", "Execution mode: live or mock")
 	rootCmd.PersistentFlags().StringP("namespace", "n", "", "Namespace of the control plane to scan")
 	rootCmd.PersistentFlags().StringP("allowed-namespaces-regex", "r", ".*", "Regular expression to restrict allowed control plane namespaces")
-	
+
 	viper.BindPFlag("mode", rootCmd.PersistentFlags().Lookup("mode"))
 	viper.BindPFlag("namespace", rootCmd.PersistentFlags().Lookup("namespace"))
 	viper.BindPFlag("allowed-namespaces-regex", rootCmd.PersistentFlags().Lookup("allowed-namespaces-regex"))
@@ -57,6 +58,7 @@ func initConfig() {
 		viper.SetConfigName(".sm3-migration-tool")
 	}
 
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err == nil {

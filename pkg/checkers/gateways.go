@@ -16,8 +16,8 @@ func (c *gatewayChecker) Name() string {
 	return "Gateway Checker"
 }
 
-func (c *gatewayChecker) Check(ctx context.Context, state *discovery.ClusterState) ([]Finding, error) {
-	var findings []Finding
+func (c *gatewayChecker) Check(ctx context.Context, state *discovery.ClusterState) ([]CheckResult, error) {
+	var results []CheckResult
 
 	for _, cp := range state.SM2ControlPlanes {
 		spec, ok := cp.Spec.(map[string]interface{})
@@ -27,25 +27,55 @@ func (c *gatewayChecker) Check(ctx context.Context, state *discovery.ClusterStat
 
 		gateways, ok := spec["gateways"].(map[string]interface{})
 		if !ok {
+			// If gateways block is completely missing, it's a pass for "managed gateways" check
+			results = append(results, CheckResult{
+				Title:  "Managed Gateway Check",
+				Target: cp.Name,
+				Status: StatusSuccess,
+			})
 			continue
 		}
 
 		enabled, _ := gateways["enabled"].(bool)
-		if enabled {
-			findings = append(findings, Finding{
-				ResourceName: cp.Name,
-				Namespace:    cp.Namespace,
-				Kind:         cp.Kind,
-				Message:      "SMCP has managed gateways enabled. OSSM 3.x does not manage gateway resources.",
-				Severity:     SeverityHigh,
-				Remediation:  RemediationGuide{
-					Description: "Migrate to standalone gateway injection or Kubernetes Gateway API before moving to OSSM 3.x.",
-					Commands:    []string{"oc patch smcp " + cp.Name + " -n " + cp.Namespace + " --type=json -p='[{\"op\": \"replace\", \"path\": \"/spec/gateways/enabled\", \"value\": false}]'"},
-					DocsLinks:   []string{"https://docs.redhat.com/en/documentation/openshift_container_platform/4.14/html/service_mesh/migrating-from-service-mesh-2-to-service-mesh-3#service-mesh-gateway-migration"},
+
+		ingress, ok := gateways["ingress"].(map[string]interface{})
+		ingressEnabled := false
+		if ok {
+			ingressEnabled, _ = ingress["enabled"].(bool)
+		}
+
+		egress, ok := gateways["egress"].(map[string]interface{})
+		egressEnabled := false
+		if ok {
+			egressEnabled, _ = egress["enabled"].(bool)
+		}
+
+		if enabled || ingressEnabled || egressEnabled {
+			results = append(results, CheckResult{
+				Title:  "Managed Gateway Check",
+				Target: cp.Name,
+				Status: StatusFailure,
+				Finding: &Finding{
+					ResourceName: cp.Name,
+					Namespace:    cp.Namespace,
+					Kind:         cp.Kind,
+					Message:      "SMCP has managed gateways enabled. OSSM 3.x does not manage gateway resources.",
+					Severity:     SeverityHigh,
+					Remediation: RemediationGuide{
+						Description: "Migrate to standalone gateway injection or Kubernetes Gateway API before moving to OSSM 3.x.",
+						Commands:    []string{"oc patch smcp " + cp.Name + " -n " + cp.Namespace + " --type=json -p='[{\"op\": \"replace\", \"path\": \"/spec/gateways/ingress/enabled\", \"value\": false}]'"},
+						DocsLinks:   []string{"https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/migrating_from_service_mesh_2_to_service_mesh_3/index#ossm-migrating-to-gateway-injection_ossm-migrating-premigration-checklists"},
+					},
 				},
+			})
+		} else {
+			results = append(results, CheckResult{
+				Title:  "Managed Gateway Check",
+				Target: cp.Name,
+				Status: StatusSuccess,
 			})
 		}
 	}
 
-	return findings, nil
+	return results, nil
 }

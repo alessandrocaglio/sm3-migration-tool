@@ -41,15 +41,22 @@ var tuiCmd = &cobra.Command{
 			checkers.NewGatewayChecker(),
 			checkers.NewServiceEntryChecker(),
 			checkers.NewMtlsChecker(),
+			checkers.NewAddonsChecker(),
+			checkers.NewNetworkPolicyChecker(),
+			checkers.NewRouteChecker(),
 		}
 
 		var allFindings []checkers.Finding
 		for _, c := range allCheckers {
-			findings, err := c.Check(context.Background(), state)
+			results, err := c.Check(context.Background(), state)
 			if err != nil {
 				continue
 			}
-			allFindings = append(allFindings, findings...)
+			for _, r := range results {
+				if r.Status == checkers.StatusFailure && r.Finding != nil {
+					allFindings = append(allFindings, *r.Finding)
+				}
+			}
 		}
 
 		if err := tui.Run(allFindings); err != nil {

@@ -8,9 +8,9 @@ import (
 	"github.com/alessandrocaglio/sm3-migration-tool/pkg/checkers"
 	"github.com/alessandrocaglio/sm3-migration-tool/pkg/discovery"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
 	"regexp"
-	"github.com/spf13/viper"
 )
 
 type Server struct {
@@ -69,7 +69,20 @@ func (s *Server) handleScan(c *gin.Context) {
 
 	// Validate namespace against allowed regex
 	allowedRegex := viper.GetString("allowed-namespaces-regex")
-	if namespace != "" && allowedRegex != "" {
+
+	if namespace == "" && allowedRegex != "" {
+		// If no namespace provided, check how many match the regex
+		matches := s.getMatchingNamespaces(allowedRegex)
+		if len(matches) == 1 {
+			namespace = matches[0] // Auto-select if only one
+		} else if len(matches) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "multiple matching control planes found, please select one"})
+			return
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{"error": "no matching control plane found for assessment"})
+			return
+		}
+	} else if namespace != "" && allowedRegex != "" {
 		matched, _ := regexp.MatchString(allowedRegex, namespace)
 		if !matched {
 			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Namespace %s is not allowed by configuration pattern", namespace)})
@@ -118,18 +131,39 @@ func (s *Server) handleScan(c *gin.Context) {
 		checkers.NewRouteChecker(),
 	}
 
-	var allFindings []checkers.Finding
+	var allResults []checkers.CheckResult
 	for _, chk := range allCheckers {
-		findings, err := chk.Check(context.Background(), state)
+		results, err := chk.Check(context.Background(), state)
 		if err != nil {
 			continue
 		}
-		allFindings = append(allFindings, findings...)
+		allResults = append(allResults, results...)
+	}
+
+	// Extract findings for backward compatibility and specialized "Remediations" view
+	var findings []checkers.Finding
+	for _, res := range allResults {
+		if res.Status == checkers.StatusFailure && res.Finding != nil {
+			findings = append(findings, *res.Finding)
+		}
+	}
+
+	// The discovery engine now populates state.Namespaces with all mesh-participating namespaces
+	nsList := []string{}
+	seenNs := make(map[string]bool)
+	for _, ns := range state.Namespaces {
+		if !seenNs[ns.Name] {
+			nsList = append(nsList, ns.Name)
+			seenNs[ns.Name] = true
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"findings": allFindings,
-		"count":    len(allFindings),
+		"checks":            allResults,
+		"findings":          findings,
+		"mesh_namespaces":   nsList,
+		"resources":         state,
+		"count":             len(findings),
 		"scanned_namespace": namespace,
 	})
 }
@@ -190,4 +224,40 @@ func (s *Server) handleListNamespaces(c *gin.Context) {
 		"namespaces": filtered,
 		"regex":      allowedRegex,
 	})
+}
+
+func (s *Server) getMatchingNamespaces(regex string) []string {
+	// Discovery engine
+	config := discovery.DiscoveryConfig{}
+	var disc discovery.Discovery
+
+	if s.mode == "mock" {
+		disc = discovery.NewMockDiscovery("testdata/mock-cluster.yaml", config)
+	} else {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+		restConfig, err := kubeConfig.ClientConfig()
+		if err != nil {
+			return nil
+		}
+		disc, _ = discovery.NewLiveDiscovery(config, restConfig)
+	}
+
+	state, err := disc.Discover(context.Background())
+	if err != nil {
+		return nil
+	}
+
+	var matches []string
+	seen := make(map[string]bool)
+	re, _ := regexp.Compile(regex)
+
+	for _, ns := range state.Namespaces {
+		if re != nil && re.MatchString(ns.Name) && !seen[ns.Name] {
+			matches = append(matches, ns.Name)
+			seen[ns.Name] = true
+		}
+	}
+	return matches
 }

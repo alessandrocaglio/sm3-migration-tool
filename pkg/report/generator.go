@@ -10,7 +10,7 @@ import (
 
 // Report represents the final migration assessment.
 type Report struct {
-	Summary  string              `json:"summary"`
+	Summary  string             `json:"summary"`
 	Findings []checkers.Finding `json:"findings"`
 }
 

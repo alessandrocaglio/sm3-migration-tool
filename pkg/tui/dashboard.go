@@ -94,7 +94,7 @@ func (m model) View() string {
 			)
 
 			if m.cursor == i {
-				s.WriteString(findingStyle.BorderForeground(rhRed).Render(cursor + " " + content) + "\n")
+				s.WriteString(findingStyle.BorderForeground(rhRed).Render(cursor+" "+content) + "\n")
 			} else {
 				s.WriteString("  " + content + "\n\n")
 			}

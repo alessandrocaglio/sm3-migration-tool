@@ -40,26 +40,33 @@ func TestServiceEntryChecker(t *testing.T) {
 	}
 
 	checker := NewServiceEntryChecker()
-	findings, err := checker.Check(context.Background(), state)
+	results, err := checker.Check(context.Background(), state)
 	if err != nil {
 		t.Fatalf("Check failed: %v", err)
 	}
 
-	if len(findings) != 2 {
-		t.Errorf("Expected 2 finding, got %d", len(findings))
+	failures := []CheckResult{}
+	for _, r := range results {
+		if r.Status == StatusFailure {
+			failures = append(failures, r)
+		}
+	}
+
+	if len(failures) != 2 {
+		t.Errorf("Expected 2 failures, got %d", len(failures))
 	} else {
 		foundOversized := false
 		foundMissingPorts := false
-		for _, f := range findings {
-			if f.ResourceName == "oversized" {
+		for _, f := range failures {
+			if f.Target == "oversized" {
 				foundOversized = true
 			}
-			if f.ResourceName == "missing-ports" {
+			if f.Target == "missing-ports" {
 				foundMissingPorts = true
 			}
 		}
 		if !foundOversized || !foundMissingPorts {
-			t.Errorf("Did not find expected resources in findings")
+			t.Errorf("Did not find expected resources in failures")
 		}
 	}
 }

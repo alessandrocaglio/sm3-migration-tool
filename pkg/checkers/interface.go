@@ -24,6 +24,22 @@ type RemediationGuide struct {
 	DocsLinks   []string `json:"docs_links,omitempty"`
 }
 
+// CheckStatus represents the outcome of a check.
+type CheckStatus string
+
+const (
+	StatusSuccess CheckStatus = "Success"
+	StatusFailure CheckStatus = "Failure"
+)
+
+// CheckResult represents the outcome of a specific validation.
+type CheckResult struct {
+	Title   string      `json:"title"`
+	Target  string      `json:"target"`
+	Status  CheckStatus `json:"status"`
+	Finding *Finding    `json:"finding,omitempty"`
+}
+
 // Finding represents an issue or observation found during a check.
 type Finding struct {
 	ResourceName string           `json:"resource_name"`
@@ -37,5 +53,5 @@ type Finding struct {
 // Checker is the interface for compatibility checks.
 type Checker interface {
 	Name() string
-	Check(ctx context.Context, state *discovery.ClusterState) ([]Finding, error)
+	Check(ctx context.Context, state *discovery.ClusterState) ([]CheckResult, error)
 }

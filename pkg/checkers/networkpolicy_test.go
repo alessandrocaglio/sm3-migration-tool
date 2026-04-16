@@ -34,14 +34,21 @@ func TestNetworkPolicyChecker(t *testing.T) {
 	}
 
 	checker := NewNetworkPolicyChecker()
-	findings, err := checker.Check(context.Background(), state)
+	results, err := checker.Check(context.Background(), state)
 	if err != nil {
 		t.Fatalf("Check failed: %v", err)
 	}
 
-	if len(findings) != 1 {
-		t.Errorf("Expected 1 finding, got %d", len(findings))
-	} else if findings[0].ResourceName != "basic" {
-		t.Errorf("Expected finding for 'basic', got '%s'", findings[0].ResourceName)
+	failures := []CheckResult{}
+	for _, r := range results {
+		if r.Status == StatusFailure {
+			failures = append(failures, r)
+		}
+	}
+
+	if len(failures) != 1 {
+		t.Errorf("Expected 1 failure, got %d", len(failures))
+	} else if failures[0].Target != "basic" {
+		t.Errorf("Expected failure for 'basic', got '%s'", failures[0].Target)
 	}
 }

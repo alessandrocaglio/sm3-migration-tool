@@ -44,18 +44,29 @@ func TestAddonsChecker(t *testing.T) {
 	}
 
 	checker := NewAddonsChecker()
-	findings, err := checker.Check(context.Background(), state)
+	results, err := checker.Check(context.Background(), state)
 	if err != nil {
 		t.Fatalf("Check failed: %v", err)
 	}
 
-	if len(findings) != 4 {
-		t.Errorf("Expected 4 findings, got %d", len(findings))
+	// Filter for failures (actual findings)
+	var failures []CheckResult
+	for _, r := range results {
+		if r.Status == StatusFailure {
+			failures = append(failures, r)
+		}
 	}
 
-	for _, f := range findings {
-		if f.ResourceName != "basic" {
-			t.Errorf("Expected finding for 'basic' SMCP, got '%s'", f.ResourceName)
+	if len(failures) != 3 { // Grafana, Prometheus, Tracing are enabled in 'basic'
+		t.Errorf("Expected 3 failures, got %d", len(failures))
+	}
+
+	for _, f := range failures {
+		if f.Target != "basic" {
+			t.Errorf("Expected failure for 'basic' SMCP, got '%s'", f.Target)
+		}
+		if f.Finding == nil {
+			t.Errorf("Expected finding details for failure result")
 		}
 	}
 }

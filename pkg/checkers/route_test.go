@@ -56,27 +56,34 @@ func TestRouteChecker(t *testing.T) {
 	}
 
 	checker := NewRouteChecker()
-	findings, err := checker.Check(context.Background(), state)
+	results, err := checker.Check(context.Background(), state)
 	if err != nil {
 		t.Fatalf("Check failed: %v", err)
 	}
 
-	if len(findings) != 2 {
-		t.Errorf("Expected 2 findings, got %d", len(findings))
+	failures := []CheckResult{}
+	for _, r := range results {
+		if r.Status == StatusFailure {
+			failures = append(failures, r)
+		}
+	}
+
+	if len(failures) != 2 {
+		t.Errorf("Expected 2 failures, got %d", len(failures))
 	}
 
 	foundCP := false
 	foundRoute := false
-	for _, f := range findings {
-		if f.ResourceName == "basic" {
+	for _, f := range failures {
+		if f.Target == "basic" {
 			foundCP = true
 		}
-		if f.ResourceName == "ior-route" {
+		if f.Target == "ior-route" {
 			foundRoute = true
 		}
 	}
 
 	if !foundCP || !foundRoute {
-		t.Errorf("Failed to find expected resources in findings")
+		t.Errorf("Failed to find expected resources in failures")
 	}
 }
