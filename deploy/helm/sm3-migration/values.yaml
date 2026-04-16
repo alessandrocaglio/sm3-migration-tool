@@ -1,7 +1,7 @@
 # Default values for sm3-migration.
 image:
   repository: quay.io/acaglio/sm3-migration-tool
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: "latest"
 
 serviceAccount:
@@ -49,6 +49,4 @@ securityContext:
 config:
   allowedNamespacesRegex: ".*"
 
-podSecurityContext:
-  runAsUser: 1001
-  fsGroup: 1001
+podSecurityContext: {}
