@@ -1,0 +1,76 @@
+sm2_control_planes:
+  - kind: ServiceMeshControlPlane
+    name: basic
+    namespace: istio-system
+    spec:
+      version: 2.6.14
+      security:
+        manageNetworkPolicy: true
+      gateways:
+        enabled: true
+        openshiftRoute:
+          enabled: true
+      addons:
+        grafana:
+          enabled: true
+        prometheus:
+          enabled: true
+        kiali:
+          enabled: true
+      tracing:
+        type: Jaeger
+  - kind: ServiceMeshControlPlane
+    name: tenant-mesh
+    namespace: tenant-admin
+    spec:
+      version: 2.6.14
+smmr:
+  - kind: ServiceMeshMemberRoll
+    name: default
+    namespace: istio-system
+    spec:
+      members:
+        - bookinfo
+        - istio-system
+  - kind: ServiceMeshMemberRoll
+    name: default
+    namespace: tenant-admin
+    spec:
+      members:
+        - tenant-app-1
+        - tenant-app-2
+sm3_control_planes: []
+namespaces:
+  - kind: Namespace
+    name: bookinfo
+  - kind: Namespace
+    name: tenant-app-1
+  - kind: Namespace
+    name: tenant-app-2
+virtual_services:
+  - kind: VirtualService
+    name: productpage
+    namespace: bookinfo
+gateways:
+  - kind: Gateway
+    name: bookinfo-gateway
+    namespace: bookinfo
+service_entries:
+  - kind: ServiceEntry
+    name: oversized-entry
+    namespace: bookinfo
+    spec:
+      ports:
+        - number: 80
+      hosts: ["h1.com", "h2.com", "h3.com", "h4.com", "h5.com", "h6.com", "h7.com", "h8.com", "h9.com", "h10.com", "h11.com", "h12.com", "h13.com", "h14.com", "h15.com", "h16.com", "h17.com", "h18.com", "h19.com", "h20.com", "h21.com", "h22.com", "h23.com", "h24.com", "h25.com", "h26.com", "h27.com", "h28.com", "h29.com", "h30.com", "h31.com", "h32.com", "h33.com", "h34.com", "h35.com", "h36.com", "h37.com", "h38.com", "h39.com", "h40.com", "h41.com", "h42.com", "h43.com", "h44.com", "h45.com", "h46.com", "h47.com", "h48.com", "h49.com", "h50.com", "h51.com", "h52.com", "h53.com", "h54.com", "h55.com", "h56.com", "h57.com", "h58.com", "h59.com", "h60.com", "h61.com", "h62.com", "h63.com", "h64.com", "h65.com", "h66.com", "h67.com", "h68.com", "h69.com", "h70.com", "h71.com", "h72.com", "h73.com", "h74.com", "h75.com", "h76.com", "h77.com", "h78.com", "h79.com", "h80.com", "h81.com", "h82.com", "h83.com", "h84.com", "h85.com", "h86.com", "h87.com", "h88.com", "h89.com", "h90.com", "h91.com", "h92.com", "h93.com", "h94.com", "h95.com", "h96.com", "h97.com", "h98.com", "h99.com", "h100.com", "h101.com", "h102.com", "h103.com", "h104.com", "h105.com", "h106.com", "h107.com", "h108.com", "h109.com", "h110.com", "h111.com", "h112.com", "h113.com", "h114.com", "h115.com", "h116.com", "h117.com", "h118.com", "h119.com", "h120.com", "h121.com", "h122.com", "h123.com", "h124.com", "h125.com", "h126.com", "h127.com", "h128.com", "h129.com", "h130.com", "h131.com", "h132.com", "h133.com", "h134.com", "h135.com", "h136.com", "h137.com", "h138.com", "h139.com", "h140.com", "h141.com", "h142.com", "h143.com", "h144.com", "h145.com", "h146.com", "h147.com", "h148.com", "h149.com", "h150.com", "h151.com", "h152.com", "h153.com", "h154.com", "h155.com", "h156.com", "h157.com", "h158.com", "h159.com", "h160.com", "h161.com", "h162.com", "h163.com", "h164.com", "h165.com", "h166.com", "h167.com", "h168.com", "h169.com", "h170.com", "h171.com", "h172.com", "h173.com", "h174.com", "h175.com", "h176.com", "h177.com", "h178.com", "h179.com", "h180.com", "h181.com", "h182.com", "h183.com", "h184.com", "h185.com", "h186.com", "h187.com", "h188.com", "h189.com", "h190.com", "h191.com", "h192.com", "h193.com", "h194.com", "h195.com", "h196.com", "h197.com", "h198.com", "h199.com", "h200.com", "h201.com", "h202.com", "h203.com", "h204.com", "h205.com", "h206.com", "h207.com", "h208.com", "h209.com", "h210.com", "h211.com", "h212.com", "h213.com", "h214.com", "h215.com", "h216.com", "h217.com", "h218.com", "h219.com", "h220.com", "h221.com", "h222.com", "h223.com", "h224.com", "h225.com", "h226.com", "h227.com", "h228.com", "h229.com", "h230.com", "h231.com", "h232.com", "h233.com", "h234.com", "h235.com", "h236.com", "h237.com", "h238.com", "h239.com", "h240.com", "h241.com", "h242.com", "h243.com", "h244.com", "h245.com", "h246.com", "h247.com", "h248.com", "h249.com", "h250.com", "h251.com", "h252.com", "h253.com", "h254.com", "h255.com", "h256.com", "h257.com", "h258.com", "h259.com", "h260.com", "h261.com", "h262.com", "h263.com", "h264.com", "h265.com", "h266.com", "h267.com", "h268.com", "h269.com", "h270.com"]
+  - kind: ServiceEntry
+    name: missing-ports
+    namespace: bookinfo
+    spec:
+      hosts: ["h1.com"]
+routes:
+  - kind: Route
+    name: bad-route
+    namespace: bookinfo
+    labels:
+      maistra.io/generated-by: ior

@@ -1,0 +1,27 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "sm3-migration.fullname" . }}-scanner-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "sm3-migration.fullname" . }}-scanner
+subjects:
+- kind: ServiceAccount
+  name: {{ include "sm3-migration.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- else if .Values.rbac.roleName -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "sm3-migration.fullname" . }}-scanner-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.rbac.roleName }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "sm3-migration.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end -}}

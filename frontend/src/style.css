@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-redhat: #EE0000;
+  --font-inter: 'Inter', sans-serif;
+  --color-dark-charcoal: #1F2937;
+  --color-true-black: #111827;
+}
+
+body {
+    background-color: var(--color-true-black);
+    color: white;
+}

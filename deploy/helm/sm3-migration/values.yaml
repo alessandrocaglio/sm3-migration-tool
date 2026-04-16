@@ -1,0 +1,54 @@
+# Default values for sm3-migration.
+image:
+  repository: quay.io/acaglio/sm3-migration-tool
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+rbac:
+  # Specifies whether ClusterRole and ClusterRoleBinding should be created.
+  # Set to false if the installing user lacks cluster-wide permissions.
+  create: true
+  # The name of a pre-existing ClusterRole to bind to if create is false.
+  # If create is true, this is ignored.
+  roleName: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+route:
+  enabled: true
+  host: ""
+  tls:
+    enabled: true
+    termination: edge
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Standard OpenShift restricted SCC compatibility
+securityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+config:
+  allowedNamespacesRegex: ".*"
+
+podSecurityContext:
+  runAsUser: 1001
+  fsGroup: 1001
