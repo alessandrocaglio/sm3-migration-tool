@@ -37,6 +37,7 @@ type CheckResult struct {
 	Title   string      `json:"title"`
 	Target  string      `json:"target"`
 	Status  CheckStatus `json:"status"`
+	Checker string      `json:"checker,omitempty"`
 	Finding *Finding    `json:"finding,omitempty"`
 }
 

@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/alessandrocaglio/sm3-migration-tool/pkg/checkers"
 	"github.com/alessandrocaglio/sm3-migration-tool/pkg/discovery"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
-	"regexp"
 )
 
 type Server struct {
@@ -137,35 +137,13 @@ func (s *Server) handleScan(c *gin.Context) {
 		if err != nil {
 			continue
 		}
+		for i := range results {
+			results[i].Checker = chk.Name()
+		}
 		allResults = append(allResults, results...)
 	}
 
-	// Extract findings for backward compatibility and specialized "Remediations" view
-	var findings []checkers.Finding
-	for _, res := range allResults {
-		if res.Status == checkers.StatusFailure && res.Finding != nil {
-			findings = append(findings, *res.Finding)
-		}
-	}
-
-	// The discovery engine now populates state.Namespaces with all mesh-participating namespaces
-	nsList := []string{}
-	seenNs := make(map[string]bool)
-	for _, ns := range state.Namespaces {
-		if !seenNs[ns.Name] {
-			nsList = append(nsList, ns.Name)
-			seenNs[ns.Name] = true
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"checks":            allResults,
-		"findings":          findings,
-		"mesh_namespaces":   nsList,
-		"resources":         state,
-		"count":             len(findings),
-		"scanned_namespace": namespace,
-	})
+	c.JSON(http.StatusOK, BuildScanResponse(namespace, state, allResults))
 }
 
 func (s *Server) Start(addr string) error {

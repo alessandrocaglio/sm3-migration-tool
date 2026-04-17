@@ -1,6 +1,13 @@
 import { computed, reactive, readonly } from 'vue'
 import { fetchNamespaces, fetchScan } from '../services/api'
-import { buildRecentFindings, buildResourceCounts, buildSummary } from '../services/mappers'
+import {
+  buildNamespaceImpact,
+  buildRecentFindings,
+  buildResourceCounts,
+  buildSeverityDistribution,
+  buildSummary,
+  buildTopResourceTypes,
+} from '../services/mappers'
 
 const state = reactive({
   allowedNamespaces: [],
@@ -21,6 +28,9 @@ const state = reactive({
 const summary = computed(() => buildSummary(state.data))
 const resourceCounts = computed(() => buildResourceCounts(state.data.resources))
 const recentFindings = computed(() => buildRecentFindings(state.data))
+const severityDistribution = computed(() => buildSeverityDistribution(state.data))
+const namespaceImpact = computed(() => buildNamespaceImpact(state.data))
+const topResourceTypes = computed(() => buildTopResourceTypes(state.data.resources))
 
 async function loadNamespaces() {
   const payload = await fetchNamespaces()
@@ -103,6 +113,9 @@ export function useScanStore() {
     summary,
     resourceCounts,
     recentFindings,
+    severityDistribution,
+    namespaceImpact,
+    topResourceTypes,
     initialize,
     selectNamespace,
     refresh,

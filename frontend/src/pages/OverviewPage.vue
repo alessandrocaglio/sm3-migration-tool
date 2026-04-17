@@ -1,70 +1,35 @@
 <script setup>
+import NamespaceImpactList from '../components/overview/NamespaceImpactList.vue'
+import ReadinessHero from '../components/overview/ReadinessHero.vue'
+import RiskDistribution from '../components/overview/RiskDistribution.vue'
+import SummaryCard from '../components/overview/SummaryCard.vue'
+import TopBlockers from '../components/overview/TopBlockers.vue'
+
 defineProps({
   summary: { type: Object, required: true },
   recentFindings: { type: Array, default: () => [] },
+  severityDistribution: { type: Array, default: () => [] },
+  namespaceImpact: { type: Array, default: () => [] },
+  topResourceTypes: { type: Array, default: () => [] },
 })
 </script>
 
 <template>
   <div class="page page--overview">
-    <section class="hero-card">
-      <div>
-        <p class="hero-card__eyebrow">Overview</p>
-        <h2 class="hero-card__title">
-          {{ summary.selectedNamespace || 'No control plane selected' }}
-        </h2>
-        <p class="hero-card__description">
-          Review readiness, high-severity issues, and discovered scope before moving into the action plan.
-        </p>
-      </div>
-
-      <div class="hero-card__metric">
-        <span class="hero-card__metric-label">High severity blockers</span>
-        <strong class="hero-card__metric-value">{{ summary.highSeverityFindings }}</strong>
-      </div>
-    </section>
+    <ReadinessHero :summary="summary" />
 
     <section class="summary-grid">
-      <article class="summary-card">
-        <span class="summary-card__label">Passed Checks</span>
-        <strong class="summary-card__value">{{ summary.passedChecks }}</strong>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">Failed Checks</span>
-        <strong class="summary-card__value">{{ summary.failedChecks }}</strong>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">Mesh Namespaces</span>
-        <strong class="summary-card__value">{{ summary.meshNamespaceCount }}</strong>
-      </article>
-      <article class="summary-card">
-        <span class="summary-card__label">Discovered Resources</span>
-        <strong class="summary-card__value">{{ summary.resourceCount }}</strong>
-      </article>
+      <SummaryCard label="Passed Checks" :value="summary.passedChecks" hint="Validations already compatible" tone="success" />
+      <SummaryCard label="Failed Checks" :value="summary.failedChecks" hint="Checks requiring remediation" tone="danger" />
+      <SummaryCard label="Mesh Namespaces" :value="summary.meshNamespaceCount" hint="Namespaces currently in scope" />
+      <SummaryCard label="Discovered Resources" :value="summary.resourceCount" hint="Resources loaded into this assessment" />
     </section>
 
-    <section class="content-card">
-      <div class="section-heading">
-        <div>
-          <p class="section-heading__eyebrow">Top Findings</p>
-          <h3 class="section-heading__title">Recent blockers</h3>
-        </div>
-      </div>
-
-      <ul v-if="recentFindings.length" class="finding-list">
-        <li v-for="finding in recentFindings" :key="`${finding.namespace}/${finding.resource_name}/${finding.message}`" class="finding-list__item">
-          <div class="finding-list__header">
-            <span :class="['pill', finding.severity === 'High' ? 'pill--danger' : 'pill--neutral']">
-              {{ finding.severity }}
-            </span>
-            <strong>{{ finding.kind }}</strong>
-            <span class="finding-list__resource">{{ finding.namespace }}/{{ finding.resource_name }}</span>
-          </div>
-          <p class="finding-list__message">{{ finding.message }}</p>
-        </li>
-      </ul>
-
-      <p v-else class="muted-copy">No findings available for the selected control plane.</p>
+    <section class="overview-grid">
+      <TopBlockers :findings="recentFindings" />
+      <RiskDistribution :distribution="severityDistribution" :top-resource-types="topResourceTypes" />
     </section>
+
+    <NamespaceImpactList :items="namespaceImpact" />
   </div>
 </template>

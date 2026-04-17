@@ -13,7 +13,7 @@ import { useRouter } from './router'
 import { useScanStore } from '../stores/scanStore'
 
 const { routes, currentRoute, navigate } = useRouter()
-const { state, summary, recentFindings, initialize, selectNamespace, refresh } = useScanStore()
+const { state, summary, recentFindings, severityDistribution, namespaceImpact, topResourceTypes, initialize, selectNamespace, refresh } = useScanStore()
 
 const busy = computed(() => state.scanStatus === 'loading')
 
@@ -46,6 +46,9 @@ const pageProps = computed(() => {
       return {
         summary: summary.value,
         recentFindings: recentFindings.value,
+        severityDistribution: severityDistribution.value,
+        namespaceImpact: namespaceImpact.value,
+        topResourceTypes: topResourceTypes.value,
       }
   }
 })
