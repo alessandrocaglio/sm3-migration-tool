@@ -33,7 +33,12 @@ const currentPage = computed(() => {
 const pageProps = computed(() => {
   switch (currentRoute.value) {
     case 'plan':
-      return { findings: state.data.findings || [] }
+      return {
+        phases: state.data.phases || [],
+        findingViews: state.data.finding_views || [],
+        categories: state.data.categories || [],
+        selectedNamespace: state.selectedNamespace,
+      }
     case 'inventory':
       return {
         resources: state.data.resources || {},

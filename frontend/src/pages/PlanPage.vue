@@ -1,27 +1,86 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import FindingDrawer from '../components/plan/FindingDrawer.vue'
+import FindingsBoard from '../components/plan/FindingsBoard.vue'
 
 const props = defineProps({
-  findings: { type: Array, default: () => [] },
+  phases: { type: Array, default: () => [] },
+  findingViews: { type: Array, default: () => [] },
+  categories: { type: Array, default: () => [] },
+  selectedNamespace: { type: String, default: '' },
 })
 
-const expandedRows = ref(new Set())
+const severityFilter = ref('all')
+const categoryFilter = ref('all')
+const namespaceFilter = ref('all')
+const selectedFindingId = ref('')
 
-const sortedFindings = computed(() => {
-  const severityOrder = { High: 0, Medium: 1, Low: 2, Info: 3 }
+const namespaceOptions = computed(() => {
+  const namespaces = new Set(
+    props.findingViews
+      .map((finding) => finding.namespace)
+      .filter(Boolean),
+  )
 
-  return [...props.findings].sort((left, right) => {
-    return (severityOrder[left.severity] ?? 99) - (severityOrder[right.severity] ?? 99)
-  })
+  return Array.from(namespaces).sort()
 })
 
-function toggleRow(index) {
-  if (expandedRows.value.has(index)) {
-    expandedRows.value.delete(index)
-  } else {
-    expandedRows.value.add(index)
+const filteredPhases = computed(() => {
+  return props.phases
+    .map((phase) => {
+      const items = phase.items.filter((finding) => {
+        const severityMatch = severityFilter.value === 'all' || finding.severity === severityFilter.value
+        const categoryMatch = categoryFilter.value === 'all' || finding.category === categoryFilter.value
+        const namespaceMatch = namespaceFilter.value === 'all' || finding.namespace === namespaceFilter.value
+        return severityMatch && categoryMatch && namespaceMatch
+      })
+
+      const counts = {
+        high: items.filter((finding) => finding.severity === 'High').length,
+        medium: items.filter((finding) => finding.severity === 'Medium').length,
+        low: items.filter((finding) => finding.severity === 'Low').length,
+        info: items.filter((finding) => finding.severity === 'Info').length,
+      }
+
+      return { ...phase, items, counts }
+    })
+    .filter((phase) => phase.items.length > 0)
+})
+
+const selectedFinding = computed(() => {
+  return props.findingViews.find((finding) => finding.id === selectedFindingId.value) || null
+})
+
+const filteredFindingCount = computed(() => {
+  return filteredPhases.value.reduce((total, phase) => total + phase.items.length, 0)
+})
+
+watch(
+  () => props.findingViews,
+  (findings) => {
+    if (!findings.length) {
+      selectedFindingId.value = ''
+      return
+    }
+
+    if (!findings.some((finding) => finding.id === selectedFindingId.value)) {
+      selectedFindingId.value = findings[0].id
+    }
+  },
+  { immediate: true },
+)
+
+watch(filteredPhases, (phases) => {
+  const available = phases.flatMap((phase) => phase.items)
+  if (!available.length) {
+    selectedFindingId.value = ''
+    return
   }
-}
+
+  if (!available.some((finding) => finding.id === selectedFindingId.value)) {
+    selectedFindingId.value = available[0].id
+  }
+})
 
 async function copyToClipboard(text) {
   try {
@@ -30,53 +89,76 @@ async function copyToClipboard(text) {
     console.error('Failed to copy text:', error)
   }
 }
+
+function clearSelection() {
+  selectedFindingId.value = ''
+}
 </script>
 
 <template>
-  <div class="page">
+  <div class="page page--plan">
     <section class="content-card">
       <div class="section-heading">
         <div>
           <p class="section-heading__eyebrow">Action Plan</p>
-          <h2 class="section-heading__title">Remediations</h2>
+          <h2 class="section-heading__title">Migration work queue</h2>
+          <p class="muted-copy">
+            {{ filteredFindingCount }} action{{ filteredFindingCount === 1 ? '' : 's' }}
+            for {{ selectedNamespace || 'the selected control plane' }}.
+          </p>
         </div>
       </div>
 
-      <div v-if="sortedFindings.length === 0" class="empty-inline">
-        No blockers were found for the selected control plane.
+      <div class="plan-filters">
+        <label class="picker">
+          <span class="picker__label">Severity</span>
+          <select v-model="severityFilter" class="picker__select">
+            <option value="all">All severities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+            <option value="Info">Info</option>
+          </select>
+        </label>
+
+        <label class="picker">
+          <span class="picker__label">Category</span>
+          <select v-model="categoryFilter" class="picker__select">
+            <option value="all">All categories</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ category.label }}
+            </option>
+          </select>
+        </label>
+
+        <label class="picker">
+          <span class="picker__label">Namespace</span>
+          <select v-model="namespaceFilter" class="picker__select">
+            <option value="all">All namespaces</option>
+            <option v-for="namespace in namespaceOptions" :key="namespace" :value="namespace">
+              {{ namespace }}
+            </option>
+          </select>
+        </label>
       </div>
+    </section>
 
-      <ul v-else class="finding-list finding-list--expandable">
-        <li v-for="(finding, index) in sortedFindings" :key="`${finding.namespace}/${finding.resource_name}/${index}`" class="finding-list__item">
-          <button class="finding-list__toggle" @click="toggleRow(index)">
-            <div class="finding-list__header">
-              <span :class="['pill', finding.severity === 'High' ? 'pill--danger' : 'pill--neutral']">
-                {{ finding.severity }}
-              </span>
-              <strong>{{ finding.kind }}</strong>
-              <span class="finding-list__resource">{{ finding.namespace }}/{{ finding.resource_name }}</span>
-            </div>
-            <p class="finding-list__message">{{ finding.message }}</p>
-          </button>
+    <div v-if="!filteredPhases.length" class="empty-inline">
+      No action items match the current filters.
+    </div>
 
-          <div v-if="expandedRows.has(index)" class="finding-detail">
-            <p class="finding-detail__description">{{ finding.remediation.description }}</p>
+    <section v-else class="plan-layout">
+      <FindingsBoard
+        :phases="filteredPhases"
+        :selected-finding-id="selectedFindingId"
+        @select="selectedFindingId = $event.id"
+      />
 
-            <div v-if="finding.remediation.commands?.length" class="finding-detail__commands">
-              <div v-for="command in finding.remediation.commands" :key="command" class="command-block">
-                <pre>{{ command }}</pre>
-                <button class="app-button" @click="copyToClipboard(command)">Copy</button>
-              </div>
-            </div>
-
-            <div v-if="finding.remediation.docs_links?.length" class="finding-detail__links">
-              <a v-for="link in finding.remediation.docs_links" :key="link" :href="link" target="_blank" rel="noreferrer">
-                {{ link }}
-              </a>
-            </div>
-          </div>
-        </li>
-      </ul>
+      <FindingDrawer
+        :finding="selectedFinding"
+        @close="clearSelection"
+        @copy="copyToClipboard"
+      />
     </section>
   </div>
 </template>

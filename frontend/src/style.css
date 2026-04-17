@@ -421,6 +421,7 @@ a:hover {
 .command-block {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .command-block pre {
@@ -430,6 +431,9 @@ a:hover {
   border-radius: 14px;
   background: #fffdfa;
   overflow: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .finding-detail__links {
@@ -483,6 +487,11 @@ a:hover {
 .status-chip--success {
   background: var(--color-success-soft);
   color: var(--color-success);
+}
+
+.status-chip--neutral {
+  background: var(--color-neutral-soft);
+  color: var(--color-ink);
 }
 
 .status-dot {
@@ -584,6 +593,174 @@ a:hover {
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: 0.84rem;
+}
+
+.plan-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.plan-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(520px, 1.2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.findings-board {
+  display: grid;
+  gap: 18px;
+}
+
+.phase-section {
+  display: grid;
+  gap: 14px;
+}
+
+.phase-section__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.phase-section__title,
+.finding-drawer__title {
+  margin: 4px 0 0;
+}
+
+.phase-section__counts,
+.finding-drawer__badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.phase-section__items {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.54);
+  cursor: pointer;
+  transition: 160ms ease;
+}
+
+.plan-card:hover,
+.plan-card--selected {
+  border-color: #c8ad98;
+  background: white;
+  box-shadow: var(--shadow-soft);
+}
+
+.plan-card__header,
+.plan-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plan-card__category,
+.finding-drawer__subtitle {
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.plan-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.plan-card__message,
+.finding-drawer__copy {
+  margin: 0;
+  color: var(--color-ink);
+  line-height: 1.5;
+}
+
+.plan-card__resource {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.finding-drawer {
+  position: sticky;
+  top: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  background: var(--color-panel-strong);
+  box-shadow: var(--shadow-card);
+  min-height: 280px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.finding-drawer__content,
+.finding-drawer__empty {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  min-width: 0;
+}
+
+.finding-drawer__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.finding-drawer__header > :first-child {
+  min-width: 0;
+}
+
+.finding-drawer__subtitle {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.finding-drawer__section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.finding-drawer__commands,
+.finding-drawer__links {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.finding-drawer__links a,
+.finding-drawer__copy,
+.finding-drawer__title {
+  overflow-wrap: anywhere;
+}
+
+.finding-drawer__code {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: #fffdfa;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .inventory-layout {
@@ -742,7 +919,9 @@ code[class*="language-"] {
   .summary-grid,
   .status-bar,
   .inventory-layout,
-  .overview-grid {
+  .overview-grid,
+  .plan-layout,
+  .plan-filters {
     grid-template-columns: 1fr;
   }
 }
@@ -754,7 +933,9 @@ code[class*="language-"] {
 
   .app-header,
   .readiness-hero,
-  .inventory-detail__header {
+  .inventory-detail__header,
+  .phase-section__header,
+  .finding-drawer__header {
     align-items: start;
     flex-direction: column;
   }

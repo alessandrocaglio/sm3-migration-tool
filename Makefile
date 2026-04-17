@@ -26,6 +26,9 @@ container-push:
 
 push: build container-build container-push
 
+web-mock: build
+	bin/sm3-migration-tool serve -m mock
+
 clean:
 	rm -rf frontend/dist
 	rm -rf pkg/api/ui
