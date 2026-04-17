@@ -42,7 +42,7 @@ func (c *routeChecker) Check(ctx context.Context, state *discovery.ClusterState)
 							Remediation: RemediationGuide{
 								Description: "Disable IOR by setting spec.gateways.openshiftRoute.enabled=false and migrate to explicitly managed routes or LoadBalancer services.",
 								Commands:    []string{"oc patch smcp " + smcp.Name + " -n " + smcp.Namespace + " --type=json -p='[{\"op\": \"replace\", \"path\": \"/spec/gateways/openshiftRoute/enabled\", \"value\": false}]'"},
-								DocsLinks:   []string{"https://docs.redhat.com/en/documentation/openshift_container_platform/4.14/html/service_mesh/migrating-from-service-mesh-2-to-service-mesh-3#service-mesh-route-migration"},
+								DocsLinks:   []string{"https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/migrating_from_service_mesh_2_to_service_mesh_3/index#ossm-migrating-to-explicitly-managed-routes_ossm-migrating-premigration-checklists"},
 							},
 						},
 					})
