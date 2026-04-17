@@ -13,10 +13,10 @@ build-frontend:
 	mkdir -p pkg/api/ui
 	cp -r frontend/dist/* pkg/api/ui/
 
-build-go: test
-	go build -o sm3-migration-tool main.go
+build-go: fmt test
+	go build -o bin/sm3-migration-tool main.go
 
-build: fmt test build-frontend build-go
+build: build-frontend build-go
 
 container-build:
 	docker build -t quay.io/acaglio/sm3-migration-tool:latest -f Containerfile .
