@@ -24,7 +24,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   font: inherit;
 }
 
@@ -88,7 +89,6 @@ a:hover {
 .side-nav__subtitle,
 .app-header__eyebrow,
 .section-heading__eyebrow,
-.hero-card__eyebrow,
 .picker__label,
 .status-bar__label,
 .summary-card__label {
@@ -139,7 +139,6 @@ a:hover {
 
 .app-header__eyebrow,
 .section-heading__eyebrow,
-.hero-card__eyebrow,
 .picker__label,
 .status-bar__label,
 .summary-card__label {
@@ -151,8 +150,7 @@ a:hover {
 }
 
 .app-header__title,
-.section-heading__title,
-.hero-card__title {
+.section-heading__title {
   margin: 4px 0 0;
 }
 
@@ -174,6 +172,7 @@ a:hover {
 }
 
 .picker__select,
+.picker__input,
 .app-button {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
@@ -183,6 +182,11 @@ a:hover {
 }
 
 .picker__select {
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+.picker__input {
   min-height: 44px;
   padding: 0 14px;
 }
@@ -254,8 +258,8 @@ a:hover {
 
 .state-card__description,
 .muted-copy,
-.finding-detail__description,
-.finding-list__message {
+.plan-card__message,
+.finding-drawer__copy {
   color: var(--color-muted);
 }
 
@@ -368,54 +372,10 @@ a:hover {
   margin-bottom: 18px;
 }
 
-.finding-list {
-  display: grid;
-  gap: 12px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.finding-list__item {
-  border: 1px solid var(--color-line);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.45);
-  overflow: hidden;
-}
-
-.finding-list__toggle {
-  width: 100%;
-  padding: 16px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.finding-list__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.finding-list__resource,
 .checks-table__target {
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: 0.82rem;
-}
-
-.finding-detail {
-  display: grid;
-  gap: 16px;
-  padding: 0 16px 16px;
-}
-
-.finding-detail__commands {
-  display: grid;
-  gap: 10px;
 }
 
 .command-block {
@@ -434,11 +394,6 @@ a:hover {
   max-width: 100%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.finding-detail__links {
-  display: grid;
-  gap: 8px;
 }
 
 .pill {
@@ -763,67 +718,132 @@ a:hover {
   overflow-wrap: anywhere;
 }
 
-.inventory-layout {
+.inventory-workspace {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
   gap: 20px;
+  align-items: start;
 }
 
-.inventory-sidebar,
-.inventory-detail {
+.inventory-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.inventory-table-card,
+.inventory-detail-panel {
   min-width: 0;
 }
 
-.resource-groups {
+.inventory-table {
   display: grid;
-  gap: 16px;
+  min-width: 0;
 }
 
-.resource-group {
+.inventory-table__head,
+.inventory-table__row {
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
 }
 
-.resource-group__title {
-  margin: 0;
+.inventory-table__head {
+  padding: 0 14px 12px;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.resource-group__item {
-  padding: 10px 12px;
+.inventory-table__row {
+  padding: 14px;
   border: 1px solid transparent;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.45);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.36);
   color: var(--color-ink);
   text-align: left;
   cursor: pointer;
+  transition: 160ms ease;
 }
 
-.resource-group__item:hover,
-.resource-group__item--active {
+.inventory-table__row + .inventory-table__row {
+  margin-top: 8px;
+}
+
+.inventory-table__row:hover,
+.inventory-table__row--active {
   border-color: var(--color-line);
   background: white;
+  box-shadow: var(--shadow-soft);
 }
 
-.inventory-detail__header {
+.inventory-table__name {
+  font-weight: 700;
+}
+
+.inventory-table__mono {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.inventory-detail-panel__content {
+  display: grid;
+  gap: 18px;
+}
+
+.inventory-detail-panel__header {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
 }
 
-.inventory-detail__actions {
+.inventory-detail-panel__actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.inventory-detail__body {
-  min-height: 460px;
+.inventory-detail-panel__viewer {
+  min-height: 640px;
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.evidence-export__meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.evidence-export__meta-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.evidence-export__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.evidence-filters {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.evidence-raw {
+  min-height: 420px;
   border: 1px solid var(--color-line);
   border-radius: 16px;
   overflow: hidden;
@@ -913,15 +933,18 @@ code[class*="language-"] {
 
   .side-nav {
     border-right: 0;
-    border-bottom: 1px solid var(--app-border);
+    border-bottom: 1px solid var(--color-line);
   }
 
   .summary-grid,
   .status-bar,
-  .inventory-layout,
   .overview-grid,
   .plan-layout,
-  .plan-filters {
+  .plan-filters,
+  .inventory-workspace,
+  .inventory-filters,
+  .evidence-export__meta,
+  .evidence-filters {
     grid-template-columns: 1fr;
   }
 }
@@ -933,20 +956,29 @@ code[class*="language-"] {
 
   .app-header,
   .readiness-hero,
-  .inventory-detail__header,
   .phase-section__header,
-  .finding-drawer__header {
+  .finding-drawer__header,
+  .inventory-detail-panel__header {
     align-items: start;
     flex-direction: column;
   }
 
   .app-header__controls,
-  .inventory-detail__actions {
+  .inventory-detail-panel__actions {
     width: 100%;
+  }
+
+  .evidence-export__actions {
+    flex-direction: column;
   }
 
   .picker {
     min-width: 0;
     width: 100%;
+  }
+
+  .inventory-table__head,
+  .inventory-table__row {
+    grid-template-columns: 1fr;
   }
 }

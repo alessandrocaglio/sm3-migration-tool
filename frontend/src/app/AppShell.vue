@@ -46,7 +46,11 @@ const pageProps = computed(() => {
         selectedNamespace: state.selectedNamespace,
       }
     case 'evidence':
-      return { checks: state.data.checks || [] }
+      return {
+        scanData: state.data || {},
+        selectedNamespace: state.selectedNamespace,
+        lastScannedAt: state.lastScannedAt,
+      }
     default:
       return {
         summary: summary.value,
