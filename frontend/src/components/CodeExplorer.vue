@@ -26,7 +26,7 @@ watch(() => props.modelValue, () => {
 
 <template>
   <div class="relative group h-full overflow-hidden flex flex-col bg-[#1d1f21]">
-    <pre class="flex-1 overflow-auto p-6 text-[13px] leading-relaxed font-mono custom-scrollbar m-0"><code 
+    <pre class="flex-1 overflow-auto p-6 text-[13px] leading-relaxed font-mono custom-scrollbar m-0 code-wrap"><code 
         v-html="highlightedCode" 
         :class="`language-${language}`"
       ></code></pre>
@@ -45,6 +45,13 @@ pre[class*="language-"] {
 code[class*="language-"] {
   text-shadow: none !important;
   font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace !important;
+}
+
+.code-wrap,
+.code-wrap code[class*="language-"] {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
